@@ -1,6 +1,6 @@
-#!/bin/env python
+#!/usr/bin/env python
 
-from flask import Flask
+from flask import Flask, send_file
 
 from slurm import *
 
@@ -19,9 +19,10 @@ log("Read queue {} lines".format(len(queue.data)))
 
 app = Flask(__name__)
 
-@app.route('/')
-def index():
-    return 'Hello world'
+@app.route('/', defaults={'file': 'index.html'})
+@app.route('/<path:file>')
+def index(file):
+    return send_file('app/dist/'+file)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
