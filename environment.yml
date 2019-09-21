@@ -1,0 +1,8 @@
+name: flask
+channels:
+  - conda-forge
+  - bioconda
+  - r
+  - defaults
+dependencies:
+  - flask>=1.1
