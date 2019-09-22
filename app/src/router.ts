@@ -1,16 +1,18 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import Home from './views/Home.vue'
+import Share from './views/Share.vue'
+import Queue from './views/Queue.vue'
+import Config from './views/Config.vue'
+import Running from './views/Running.vue'
 
 Vue.use(Router)
 
 export default new Router({
   routes: [
-    {
-      path: '/',
-      name: 'home',
-      component: Home
-    },
+    { path: '/share', name: 'share', component: Share },
+    { path: '/queue', name: 'queue', component: Queue },
+    { path: '/config', name: 'config', component: Config },
+    { path: '/running', name: 'running', component: Running },
     {
       path: '/about',
       name: 'about',
@@ -18,6 +20,7 @@ export default new Router({
       // this generates a separate chunk (about.[hash].js) for this route
       // which is lazy-loaded when the route is visited.
       component: () => import(/* webpackChunkName: "about" */ './views/About.vue')
-    }
+    },
+    { path: '*', redirect: '/about' }
   ]
 })

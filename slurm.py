@@ -13,12 +13,12 @@ class SlurmConfig:
         else:
             p = subprocess.Popen("scontrol show config", shell=True, stdout=subprocess.PIPE, close_fds=True)
             reader = p.stdout
-        self.data = {}
+        self.data = []
         for line in reader:
             m = re.match("(\S+)\s+=\s+(.*)", line)
             if m:
                 (key,val) = m.groups()
-                self.data[key] = val
+                self.data.append({"key": key, "value":val})
 
 class ShareInfo:
     def __init__(self, test=False):
@@ -35,7 +35,7 @@ class ShareInfo:
             p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, close_fds=True)
             reader = p.stdout
 
-        self.data = list(enumerate(csv.DictReader(reader, delimiter='|')))
+        self.data = list(csv.DictReader(reader, delimiter='|'))
 
 class Queue:
     def __init__(self, test=False):
@@ -51,7 +51,7 @@ class Queue:
             p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, close_fds=True)
             reader = p.stdout
 
-        self.data = list(enumerate(csv.DictReader(reader, delimiter='\t')))
+        self.data = list(csv.DictReader(reader, delimiter='\t'))
 
 def log(str):
     sys.stderr.write(str + "\n")

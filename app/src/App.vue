@@ -1,12 +1,85 @@
 <template>
   <div id="app">
-    <div id="nav">
-      <router-link to="/">Home</router-link> |
-      <router-link to="/about">About</router-link>
+    <div v-if='loaded'>
+      <div id="nav">
+        <router-link to="/running">Running</router-link>
+        <router-link to="/queue">Queue</router-link>
+        <router-link to="/share">Share</router-link>
+        <router-link to="/config">Config</router-link>
+        <router-link to="/about">About</router-link>
+      </div>
+      <router-view/>
     </div>
-    <router-view/>
+    <div v-if="!loaded">
+      <h1>Loading...</h1>
+      <Logo />
+    </div>
   </div>
 </template>
+
+
+<script lang="js">
+import { Component, Vue, Watch } from 'vue-property-decorator';
+import axios from "axios";
+import Logo from '@/components/Logo.vue'; // @ is an alias to /src
+
+@Component({
+  components: {
+    Logo,
+  },
+})
+export default class App extends Vue {
+  loaded = false
+  config = []
+  sshare = []
+  queue = []
+
+  checkLoaded() {
+    if (this.config.length>0 && this.sshare.length>0 && this.queue.length>0) {
+      this.processConfig(this.config)
+      this.processQueue(this.queue)
+      this.processShare(this.sshare)
+
+      this.$global.config = this.config
+      this.$global.sshare = this.sshare
+      this.$global.queue = this.queue
+      this.loaded = true
+    }
+  }
+
+  processConfig(config) {
+      config.forEach((r, idx) => {
+        r.id = idx
+      })
+  }
+
+  processShare(share) {
+      share.forEach((r, idx) => {
+        r.id = idx
+      })
+  }
+
+  processQueue(queue) {
+      queue.forEach((r, idx) => {
+        r.id = idx
+        for (var key of ["CPUS","NODES","PRIORITY"]) {
+          r[key] = +r[key]
+        }
+      })
+  }
+
+
+  mounted () {
+    axios.get("/api/slurm/config")
+        .then(response => { this.config = response.data.data; this.checkLoaded() })
+    axios.get("/api/slurm/sshare")
+        .then(response => { this.sshare = response.data.data; this.checkLoaded() })
+    axios.get("/api/slurm/queue")
+        .then(response => { this.queue = response.data.data; this.checkLoaded() })
+  }
+
+}
+</script>
 
 <style>
 #app {
@@ -17,15 +90,20 @@
   color: #2c3e50;
 }
 #nav {
-  padding: 30px;
+  float:left;
+  margin: 0 50px 0 10px;
 }
 
 #nav a {
+  font-size: 18pt;
   font-weight: bold;
   color: #2c3e50;
+  display: block;
+  text-align: left;
 }
 
 #nav a.router-link-exact-active {
   color: #42b983;
 }
+
 </style>
