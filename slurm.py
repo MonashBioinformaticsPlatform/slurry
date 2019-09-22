@@ -4,6 +4,7 @@ import subprocess
 import csv
 import re
 import sys
+import codecs
 
 class SlurmConfig:
     def __init__(self, test=False):
@@ -15,6 +16,7 @@ class SlurmConfig:
             reader = p.stdout
         self.data = []
         for line in reader:
+            line = line.decode('latin-1')
             m = re.match("(\S+)\s+=\s+(.*)", line)
             if m:
                 (key,val) = m.groups()
@@ -33,7 +35,7 @@ class ShareInfo:
             flds = "Account,Cluster,EffectvUsage,FairShare,GrpTRESMins,GrpTRESRaw,ID,LevelFS,NormShares,NormUsage,Partition,RawShares,RawUsage,TRESRunMins,User"
             cmd = "sshare -P -a -o {}".format(flds)
             p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, close_fds=True)
-            reader = p.stdout
+            reader = codecs.iterdecode(p.stdout, 'latin-1')
 
         self.data = list(csv.DictReader(reader, delimiter='|'))
 
@@ -49,7 +51,7 @@ class Queue:
             flds = "%i\t%P\t%j\t%u\t%T\t%M\t%l\t%D\t%R\t%Q\t%C"
             cmd = "squeue -o '{}'".format(flds)
             p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, close_fds=True)
-            reader = p.stdout
+            reader = codecs.iterdecode(p.stdout, 'latin-1')
 
         self.data = list(csv.DictReader(reader, delimiter='\t'))
 
