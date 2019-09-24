@@ -1,8 +1,10 @@
 <template>
   <div class="home">
     <h1>Running</h1>
-    <slim-grid :data="config"
+    <slim-grid ref='slimgrid'
+               :data="config"
                :downloadable="false"
+               @after-init='afterInit'
                ></slim-grid>
   </div>
 </template>
@@ -32,6 +34,15 @@ export default class Running extends Vue {
     }
     return Object.values(by_user)
   }
+
+  afterInit(args) {
+    // Get slimgrid to do the sorting
+    let sortCol = 'CPUS'
+    this.$refs.slimgrid.sort(null, {command: 'sort-desc', grid: args.grid, sortCols: [{field: sortCol}]})
+    // And this just sets the glyph
+    args.grid.setSortColumn(sortCol, false)
+  }
+
 }
 </script>
 
