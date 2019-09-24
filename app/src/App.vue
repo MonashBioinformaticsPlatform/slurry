@@ -30,12 +30,12 @@ import Logo from '@/components/Logo.vue'; // @ is an alias to /src
 })
 export default class App extends Vue {
   loaded = false
-  config = []
-  sshare = []
-  queue = []
+  config = null
+  sshare = null
+  queue = null
 
   checkLoaded() {
-    if (this.config.length>0 && this.sshare.length>0 && this.queue.length>0) {
+    if (this.config && this.sshare && this.queue) {
       this.processConfig(this.config)
       this.processQueue(this.queue)
       this.processShare(this.sshare)
@@ -48,21 +48,23 @@ export default class App extends Vue {
   }
 
   processConfig(config) {
-      config.forEach((r, idx) => {
+      config.data.forEach((r, idx) => {
         r.id = idx
       })
   }
 
   processShare(share) {
-      share.forEach((r, idx) => {
+      share.data.forEach((r, idx) => {
         r.id = idx
       })
   }
 
   processQueue(queue) {
-      queue.forEach((r, idx) => {
+      queue.data.forEach((r, idx) => {
         r.id = idx
-        for (var key of ["CPUS","NODES","PRIORITY"]) {
+        for (var key of ["CPUS","NODES","PRIORITY",
+                         "sprio.AGE","sprio.FAIRSHARE","sprio.JOBSIZE",
+                         "sprio.PARTITION","sprio.QOS"]) {
           r[key] = +r[key]
         }
       })
@@ -71,11 +73,11 @@ export default class App extends Vue {
 
   mounted () {
     axios.get("/api/slurm/config")
-        .then(response => { this.config = response.data.data; this.checkLoaded() })
+        .then(response => { this.config = response.data; this.checkLoaded() })
     axios.get("/api/slurm/sshare")
-        .then(response => { this.sshare = response.data.data; this.checkLoaded() })
+        .then(response => { this.sshare = response.data; this.checkLoaded() })
     axios.get("/api/slurm/queue")
-        .then(response => { this.queue = response.data.data; this.checkLoaded() })
+        .then(response => { this.queue = response.data; this.checkLoaded() })
   }
 
 }

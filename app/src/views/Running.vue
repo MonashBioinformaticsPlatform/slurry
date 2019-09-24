@@ -1,7 +1,9 @@
 <template>
   <div class="home">
     <h1>Running</h1>
-    <slim-grid :data="config"></slim-grid>
+    <slim-grid :data="config"
+               :downloadable="false"
+               ></slim-grid>
   </div>
 </template>
 
@@ -17,7 +19,7 @@ import SlimGrid from 'vue-slimgrid';
 export default class Running extends Vue {
   get config () {
     var by_user = {}
-    for (var row of this.$global.queue) {
+    for (var row of this.$global.queue.data) {
         if (row.STATE == 'RUNNING') {
             if (!(row.USER in by_user)) {
                 by_user[row.USER] = {CPUS:0, NODES:0}

@@ -18,7 +18,7 @@ var shared = new Vue({
 // Create a plugin to stop objects being observed
 Vue.use({
     install: (Vue) => {
-        //Vue.noTrack = (o) -> Object.preventExtensions(o)
+        //Object.defineProperty(Vue.prototype, '$noTrack', (o:object) => Object.preventExtensions(o))
         Object.defineProperty(Vue.prototype, '$global',
             {
               get: () => shared

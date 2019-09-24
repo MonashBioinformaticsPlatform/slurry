@@ -1,16 +1,15 @@
-#!/bin/env python
-
 import subprocess
 import csv
 import re
 import sys
 import codecs
+from datetime import datetime
 
 class SlurmConfig:
     def __init__(self, test=False):
         self.test = test
         if self.test:
-            reader = open('test-data/scontrol.dmp')
+            reader = open('test-data/scontrol.dmp', mode='rb')
         else:
             p = subprocess.Popen("scontrol show config", shell=True, stdout=subprocess.PIPE, close_fds=True)
             reader = p.stdout
@@ -21,11 +20,13 @@ class SlurmConfig:
             if m:
                 (key,val) = m.groups()
                 self.data.append({"key": key, "value":val})
+        self.updated = datetime.now()
 
 class ShareInfo:
     def __init__(self, test=False):
         self.test = test
         self.data = []
+        self.updated = None
 
     def read_info(self):
         if self.test:
@@ -38,14 +39,49 @@ class ShareInfo:
             reader = codecs.iterdecode(p.stdout, 'latin-1')
 
         self.data = list(csv.DictReader(reader, delimiter='|'))
+        self.updated = datetime.now()
 
 class Queue:
     def __init__(self, test=False):
         self.test = test
         self.data = []
+        self.prio = []
+        self.updated = None
 
-    def read_queue(self):
+    def read(self):
+        self._read_prio()
+        self._read_queue()
+        # Merge prio & queue
+        prio_by_id = {}
+        for r in self.prio:
+            prio_by_id[r['JOBID']] = r
+        keys = self.prio[0].keys()
+        for idx, r in enumerate(self.data):
+            id = r['JOBID']
+            if id in prio_by_id:
+                for key, value in prio_by_id[id].items():
+                    self.data[idx]["sprio."+key] = value
+            else:
+                for key in keys:
+                    self.data[idx]["sprio."+key] = None
+
+        self.updated = datetime.now()
+
+    def _read_prio(self):
         if self.test:
+            # sprio -o "$(echo '%i\t%r\t%Y\t%A\t%F\t%J\t%P\t%Q\t%T')" > sprio.dmp
+            reader = open('test-data/sprio.dmp')
+        else:
+            flds = "%i\t%r\t%Y\t%A\t%F\t%J\t%P\t%Q\t%T"
+            cmd = "sprio -o '{}'".format(flds)
+            p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, close_fds=True)
+            reader = codecs.iterdecode(p.stdout, 'latin-1')
+
+        self.prio = list(csv.DictReader(reader, delimiter='\t'))
+
+    def _read_queue(self):
+        if self.test:
+            # squeue -o "$(echo '%i\t%P\t%j\t%u\t%T\t%M\t%l\t%D\t%R\t%Q\t%C')" > squeue.dmp
             reader = open('test-data/squeue.dmp')
         else:
             flds = "%i\t%P\t%j\t%u\t%T\t%M\t%l\t%D\t%R\t%Q\t%C"
