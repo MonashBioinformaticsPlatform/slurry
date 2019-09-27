@@ -7,6 +7,7 @@
                :data="queue"
                :column-options="columns"
                :downloadable="false"
+               :forceSyncScrolling="true"
                @data-view-update='dataViewUpdate'
                @after-init='afterInit'
                @mouse-enter='mouseEnter'

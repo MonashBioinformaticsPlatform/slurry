@@ -45,4 +45,5 @@ def index(file):
     return send_file('app/dist/'+file)
 
 if __name__ == '__main__':
-    app.run(debug=test, host='0.0.0.0')
+#    app.run(debug=test, host='0.0.0.0')
+    app.run(debug=test, host='localhost')
