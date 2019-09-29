@@ -61,7 +61,9 @@ export default class App extends Vue {
         let parents = []
         share.data.forEach((r, idx) => {
             r.id = idx
-            let lvl = r.Account.match(/^\s*/)[0].length
+
+			// Fill in fields to represent the tree structure
+			let lvl = r.Account.match(/^\s*/)[0].length
             r.Account = r.Account.substr(lvl)
             if (lvl>parents.length)
                 parents.unshift(idx-1)
@@ -72,13 +74,20 @@ export default class App extends Vue {
             r._collapsed = lvl>0
             r._leaf = true
             if (r._parent !== null)
-              share.data[r._parent]._leaf = false
-        })
+			  share.data[r._parent]._leaf = false
+
+			// Create numeric columns as appropriate
+            for (var key of ["RawShares","NormShares","RawUsage","NormUsage",
+                             "EffectvUsage","FairShare"]) {
+                r[key] = +r[key]
+            }
+		})
     }
 
     processQueue(queue) {
         queue.data.forEach((r, idx) => {
-            r.id = idx
+			r.id = idx
+			// Create numeric columns as appropriate
             for (var key of ["CPUS","NODES","PRIORITY",
                              "sprio.AGE","sprio.FAIRSHARE","sprio.JOBSIZE",
                              "sprio.PARTITION","sprio.QOS"]) {

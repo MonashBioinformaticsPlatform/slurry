@@ -7,7 +7,7 @@
                :downloadable="false"
                :forceSyncScrolling="true"
                :column-options="columns"
-               :selection-model='selectionModel'
+               :sort="sorter"
                @before-init='beforeInit'
                @after-init='afterInit'
                @grid-dbl-click='dblClick'
@@ -29,12 +29,14 @@ import datetime from '@/components/datetime.vue';
     },
 })
 export default class Share extends Vue {
-    selectionModel = new Plugins.RowSelectionModel()
+    //selectionModel = new Plugins.RowSelectionModel()
+    originalRows = null
 
     columns = {
         'Account' : {
             order: 0,
             cssClass: 'left',
+            headerInput: true,
             formatter(row, cell, value, cd, dc) {
                 let spacer = "<span style='display:inline-block;height:1px;width:" + (15 * dc._indent) + "px'></span>";
                 if (dc._leaf) {
@@ -50,20 +52,33 @@ export default class Share extends Vue {
         },
         'User': {
             order: 1,
+            headerInput: true,
         },
         'RawShares': {
             order: 2,
-            width: 90,
+            width: 100,
+            cssClass: 'right monospace',
         },
         'NormShares': {
             order: 3,
+            cssClass: 'monospace',
         },
         'RawUsage': {
             order: 4,
-            cssClass: 'right'
+            cssClass: 'right monospace',
         },
         'NormUsage': {
             order: 5,
+            cssClass: 'monospace',
+        },
+        'EffectvUsage': {
+            order: 6,
+            cssClass: 'monospace',
+        },
+        'FairShare': {
+            order: 7,
+            cssClass: 'monospace',
+
         },
         'TRESRunMins': { hidden: true },
         'Partition': { hidden: true },
@@ -74,7 +89,7 @@ export default class Share extends Vue {
         '_parent' : { hidden: true },
         '_indent' : { hidden: true },
         '_leaf' : { hidden: true},
-        '*': { order: 20 }
+        '*': { order: 20, headerFilter: false, headerInput: false },
     }
 
     get allRows () {
@@ -84,9 +99,37 @@ export default class Share extends Vue {
         return new Date(this.$global.sshare.updated)
     }
 
+    sorter(e,args) {
+        const sortCol = args.sortCols[0]
+        const sign = sortCol.sortAsc ? 1 : -1
+        const field = sortCol.sortCol.field
+        args.grid.getData().sort((row1, row2) => {
+            let p1 = row1
+            let p2 = row2
+            while (row1._indent>row2._indent)
+                row1 = this.originalRows[row1._parent]
+            while (row1._indent<row2._indent)
+                row2 = this.originalRows[row2._parent]
+            while (row1._parent != row2._parent) {
+                row1 = this.originalRows[row1._parent]
+                row2 = this.originalRows[row2._parent]
+            }
+            // row1 and row2 now at the same level, and same parent, compare them.
+            let result=0
+            if (row1===row2) {   // Original rows have a parent/child relationship.  Child always should be after parent
+                result = p1._indent>p2._indent ? 1 : -1
+            } else {
+                const x = row1[field]
+                const y = row2[field]
+                result = (x < y ? -1 : x > y ? 1 : 0) * sign;
+            }
+            return result
+        })
+    }
+
     filterRows(item) {
         while (item._parent!==null) {
-            item = this.allRows[item._parent]
+            item = this.originalRows[item._parent]
             if (item._collapsed)
                 return false
         }
@@ -96,6 +139,7 @@ export default class Share extends Vue {
     beforeInit(args) {
         // Delete the standard contextmenu handler.  I don't like it since it disables right-click
         delete this.$refs.slimgrid.events.slickGrid.onContextMenu
+        this.originalRows = this.allRows.slice(0)
     }
 
     afterInit(args) {
@@ -105,7 +149,7 @@ export default class Share extends Vue {
     dblClick(e, args) {
         let item = this.$refs.slimgrid.dataView.getItem(args.row);
         item._collapsed = !item._collapsed
-        this.$refs.slimgrid.dataView.updateItem(item.id, item);
+        this.$refs.slimgrid.dataView.refresh()
         e.stopImmediatePropagation()
     }
 
@@ -113,9 +157,9 @@ export default class Share extends Vue {
         if (e.target.classList.contains("toggle")) {
             let item = this.$refs.slimgrid.dataView.getItem(args.row);
             item._collapsed = !item._collapsed
-            this.$refs.slimgrid.dataView.updateItem(item.id, item);
+            this.$refs.slimgrid.dataView.refresh()
+            e.stopImmediatePropagation()
         }
-        e.stopImmediatePropagation()
     }
 }
 </script>
@@ -128,6 +172,10 @@ div >>> .left {
 }
 div >>> .right {
   text-align: right;
+}
+
+div >>> .monospace {
+  font-family: monospace;
 }
 
 div >>> .toggle {
