@@ -1,21 +1,23 @@
 <template>
-	<div id="app">
-    	<div v-if="loaded">
-		    <div id="nav">
-		        <router-link to="/running">Running</router-link>
-		        <router-link to="/queue">Queue</router-link>
-		        <router-link to="/share">Share</router-link>
-		        <router-link to="/config">Config</router-link>
-		        <router-link to="/about">About</router-link>
-		    </div>
-			<h1 v-if='priority_flags != "FAIR_TREE"'>PriorityFlags != FAIR_TREE</h1>
-		    <router-view />
-	    </div>
-    	<div v-if="!loaded">
-    		<h1>Loading...</h1>
-		    <Logo />
-	    </div>
-  	</div>
+    <div id="app">
+        <div v-if="loaded">
+            <div id="nav">
+                <router-link to="/running">Running</router-link>
+                <router-link to="/pending">Pending</router-link>
+                <router-link to="/queue">Queue</router-link>
+                <router-link to="/share">Share</router-link>
+                <router-link to="/config">Config</router-link>
+                <router-link to="/about">About</router-link>
+                <input id='user-input' text='text' placeholder="user" v-model='myUser'/>
+            </div>
+            <h1 v-if='priority_flags != "FAIR_TREE"'>PriorityFlags != FAIR_TREE</h1>
+            <router-view />
+        </div>
+        <div v-if="!loaded">
+            <h1>Loading...</h1>
+            <Logo />
+        </div>
+      </div>
 </template>
 
 
@@ -35,6 +37,7 @@ export default class App extends Vue {
     sshare = null
     queue = null
     priority_flags = ""
+    myUser = ""
 
     checkLoaded() {
         if (this.config && this.sshare && this.queue) {
@@ -50,11 +53,11 @@ export default class App extends Vue {
     }
 
     processConfig(config) {
-		config.data.forEach((r, idx) => {
-			r.id = idx
-			if (r.key=='PriorityFlags')
-				this.priority_flags = r.value
-		})
+        config.data.forEach((r, idx) => {
+            r.id = idx
+            if (r.key=='PriorityFlags')
+                this.priority_flags = r.value
+        })
     }
 
     processShare(share) {
@@ -62,8 +65,8 @@ export default class App extends Vue {
         share.data.forEach((r, idx) => {
             r.id = idx
 
-			// Fill in fields to represent the tree structure
-			let lvl = r.Account.match(/^\s*/)[0].length
+            // Fill in fields to represent the tree structure
+            let lvl = r.Account.match(/^\s*/)[0].length
             r.Account = r.Account.substr(lvl)
             if (lvl>parents.length)
                 parents.unshift(idx-1)
@@ -74,20 +77,20 @@ export default class App extends Vue {
             r._collapsed = lvl>0
             r._leaf = true
             if (r._parent !== null)
-			  share.data[r._parent]._leaf = false
+              share.data[r._parent]._leaf = false
 
-			// Create numeric columns as appropriate
+            // Create numeric columns as appropriate
             for (var key of ["RawShares","NormShares","RawUsage","NormUsage",
                              "EffectvUsage","FairShare"]) {
                 r[key] = +r[key]
             }
-		})
+        })
     }
 
     processQueue(queue) {
         queue.data.forEach((r, idx) => {
-			r.id = idx
-			// Create numeric columns as appropriate
+            r.id = idx
+            // Create numeric columns as appropriate
             for (var key of ["CPUS","NODES","PRIORITY",
                              "sprio.AGE","sprio.FAIRSHARE","sprio.JOBSIZE",
                              "sprio.PARTITION","sprio.QOS"]) {
@@ -96,8 +99,17 @@ export default class App extends Vue {
         })
     }
 
+    @Watch('myUser')
+    saveMyUser() {
+        this.$global.myUser = this.myUser
+        localStorage.setItem('myUser', this.myUser)
+    }
 
     mounted () {
+        if (localStorage.myUser) {
+            this.myUser = localStorage.getItem('myUser')
+        }
+
         axios.get("/api/slurm/config")
                 .then(response => { this.config = response.data; this.checkLoaded() })
         axios.get("/api/slurm/sshare")
@@ -132,5 +144,9 @@ export default class App extends Vue {
 
 #nav a.router-link-exact-active {
   color: #42b983;
+}
+
+#user-input {
+    margin-top: 30px;
 }
 </style>

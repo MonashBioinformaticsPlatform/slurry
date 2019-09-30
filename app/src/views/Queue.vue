@@ -6,6 +6,7 @@
     <slim-grid ref='slimgrid'
                :data="queue"
                :column-options="columns"
+               :row-formatter="rowFormatter"
                :downloadable="false"
                :forceSyncScrolling="true"
                @data-view-update='dataViewUpdate'
@@ -106,6 +107,14 @@ export default class Queue extends Vue {
     }
   }
 
+  rowFormatter(row) {
+    if (this.$global.myUser && row.USER.includes(this.$global.myUser)) {
+      return {cssClasses: 'highlight'}
+    } else {
+      return null
+    }
+  }
+
   get config() {
     return this.$global.config.data
   }
@@ -164,4 +173,9 @@ div >>> .priority {
   right: 10px;
   color: black;
 }
+
+div >>> .highlight {
+  background: #bbb;
+}
+
 </style>

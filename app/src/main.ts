@@ -11,6 +11,7 @@ var shared = new Vue({
         config: [],
         sshare: [],
         queue: [],
+        myUser: "",
       }
     }
 });

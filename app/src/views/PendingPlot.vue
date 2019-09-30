@@ -57,7 +57,7 @@ export default class PendingPlot extends Vue {
            .attr("width", "80%")
 
         let xScale = d3.scaleLinear()
-                       .range([0,svg.node().clientWidth])
+                       .range([40,svg.node().clientWidth])
                        .domain([0, this.maxPrio])
         let lines = svg.selectAll("g.row")
                        .data(this.queue)
@@ -65,7 +65,7 @@ export default class PendingPlot extends Vue {
                             .append("g")
                             .attr("class","row")
         newLines.append("line")
-               .attr("x1",0)
+               .attr("x1", x => this.highlight(x) ? 0 : xScale(0))
                .attr("x2", x => xScale(x.PRIORITY))
                .attr("y1", (x, i) => i)
                .attr("y2", (x, i) => i)
@@ -82,6 +82,10 @@ export default class PendingPlot extends Vue {
                .attr("stroke", x => colourScale(x.type))
         svg.on('mousemove', () => this.showTip(d3.mouse(svg.node())))
         svg.on('mouseout', this.hideTip)
+    }
+
+    highlight(row) {
+        return this.$global.myUser && row.USER.includes(this.$global.myUser)
     }
 
     showTip(loc) {
