@@ -4,6 +4,7 @@ import Share from './views/Share.vue'
 import Queue from './views/Queue.vue'
 import Config from './views/Config.vue'
 import Running from './views/Running.vue'
+import PendingPlot from './views/PendingPlot.vue'
 
 Vue.use(Router)
 
@@ -13,6 +14,7 @@ export default new Router({
     { path: '/queue', name: 'queue', component: Queue },
     { path: '/config', name: 'config', component: Config },
     { path: '/running', name: 'running', component: Running },
+    { path: '/pending', name: 'pending', component: PendingPlot },
     {
       path: '/about',
       name: 'about',
