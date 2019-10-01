@@ -2,6 +2,7 @@
     <div class="home">
         <datetime :datetime="dt"/>
         <h1>Pending</h1>
+        State: {{state}}.  Partition: {{partition}}.  Num entries : {{queue.length}}
         <div id='plot'></div>
         <div class='tip' v-show='styleTip!=null' :style='styleTip'>
             <table>
@@ -16,11 +17,12 @@
 </template>
 
 <script lang="js">
-import { Component, Vue, Watch } from 'vue-property-decorator';
-import SlimGrid from 'vue-slimgrid';
-import * as d3 from "d3";
+import { Component, Vue, Watch } from 'vue-property-decorator'
+import SlimGrid from 'vue-slimgrid'
+import * as d3 from "d3"
 
-import datetime from '@/components/datetime.vue';
+import datetime from '@/components/datetime.vue'
+import * as Prio from '@/assets/prio-weights'
 
 @Component({
     components: {
@@ -30,17 +32,12 @@ import datetime from '@/components/datetime.vue';
 export default class PendingPlot extends Vue {
     styleTip = null
     textTip = []
-
-    weights = [["PriorityWeightAge","sprio.AGE"],
-               ["PriorityWeightFairShare","sprio.FAIRSHARE"],
-               ["PriorityWeightJobSize","sprio.JOBSIZE"],
-               ["PriorityWeightPartition","sprio.PARTITION"],
-               ["PriorityWeightQOS","sprio.QOS"],
-               ["PriorityWeightTRES","sprio.TRES"]]
+    state = "PENDING"
+    partition = "comp"
 
     process_row(row, idx) {
         let last_prio=0
-        let res = this.weights.map(w => {
+        let res = Prio.weights.map(w => {
             let next_prio = last_prio+row[w[1]]
             let r = { type: w[1], idx: idx, prio1: last_prio, prio2: next_prio }
             last_prio = next_prio
@@ -50,7 +47,6 @@ export default class PendingPlot extends Vue {
     }
 
     renderPlot() {
-        let colourScale = d3.scaleOrdinal(d3.schemeAccent)
         d3.select("#plot",this.$el).html("")
         let svg = d3.select("#plot",this.$el).append("svg")
         svg.attr("height", this.queue.length)
@@ -69,7 +65,7 @@ export default class PendingPlot extends Vue {
                .attr("x2", x => xScale(x.PRIORITY))
                .attr("y1", (x, i) => i)
                .attr("y2", (x, i) => i)
-               .attr("stroke", "#f99")
+               .attr("stroke", Prio.colourScale("Unknown"))
         newLines.selectAll("line.sub")
               .data((d,idx) => this.process_row(d,idx))
               .enter()
@@ -79,7 +75,7 @@ export default class PendingPlot extends Vue {
                .attr("x2", x => xScale(x.prio2))
                .attr("y1", x => x.idx)
                .attr("y2", x => x.idx)
-               .attr("stroke", x => colourScale(x.type))
+               .attr("stroke", x => Prio.colourScale(x.type))
         svg.on('mousemove', () => this.showTip(d3.mouse(svg.node())))
         svg.on('mouseout', this.hideTip)
     }
@@ -94,7 +90,7 @@ export default class PendingPlot extends Vue {
             y=0
         let row = this.queue[y]
         this.styleTip = {} //left: d3.event.pageX+"px", top: (d3.event.pageY-50)+"px"}
-        this.textTip = this.weights.map(w => [w[1], row[w[1]]])
+        this.textTip = Prio.weights.map(w => [w[1], row[w[1]]])
         this.textTip.unshift(["Priority", row.PRIORITY])
         this.textTip.unshift(["User", row.USER])
         this.textTip.unshift(["Rank", y])
@@ -120,7 +116,9 @@ export default class PendingPlot extends Vue {
     }
 
     get queue () {
-        let res = this.$global.queue.data.filter(x => x.STATE=='PENDING' && x.PARTITION=='comp' && x.PRIORITY>0)
+        let res = this.$global.queue.data.filter(x => x.STATE==this.state &&
+                                                      x.PARTITION==this.partition &&
+                                                      x.PRIORITY>0)
         res.sort((a,b) => b.PRIORITY - a.PRIORITY)
         return res
     }

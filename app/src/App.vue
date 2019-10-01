@@ -9,6 +9,7 @@
                 <router-link to="/config">Config</router-link>
                 <router-link to="/about">About</router-link>
                 <input id='user-input' text='text' placeholder="user" v-model='myUser'/>
+                <prio-legend />
             </div>
             <h1 v-if='priority_flags != "FAIR_TREE"'>PriorityFlags != FAIR_TREE</h1>
             <router-view />
@@ -25,10 +26,11 @@
 import { Component, Vue, Watch } from 'vue-property-decorator';
 import axios from "axios";
 import Logo from '@/components/Logo.vue'; // @ is an alias to /src
+import PrioLegend from '@/components/PrioLegend.vue'; // @ is an alias to /src
 
 @Component({
     components: {
-        Logo,
+        Logo, PrioLegend
     },
 })
 export default class App extends Vue {

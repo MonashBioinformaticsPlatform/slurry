@@ -23,6 +23,7 @@ import SlimGrid from 'vue-slimgrid';
 import * as d3 from "d3";
 
 import datetime from '@/components/datetime.vue';
+import * as Prio from '@/assets/prio-weights'
 
 @Component({
   components: {
@@ -32,16 +33,9 @@ import datetime from '@/components/datetime.vue';
 export default class Queue extends Vue {
   maxPrio = 0
   columns = {}
-  weights = [["PriorityWeightAge","sprio.AGE"],
-             ["PriorityWeightFairShare","sprio.FAIRSHARE"],
-             ["PriorityWeightJobSize","sprio.JOBSIZE"],
-             ["PriorityWeightPartition","sprio.PARTITION"],
-             ["PriorityWeightQOS","sprio.QOS"],
-             ["PriorityWeightTRES","sprio.TRES"]]
 
   makeColumns() {
     let self = this
-    let colourScale = d3.scaleOrdinal(d3.schemeAccent)
 
     return {
       'JOBID': {
@@ -68,14 +62,14 @@ export default class Queue extends Vue {
         cssClass: 'right',
         formatter(row, cell, value, cd, dc) {
           if (self.maxPrio>0) {
-            let str = `<rect height=20 width=${1.0*value/self.maxPrio * 100} fill='#f99' />`
+            let str = `<rect height=20 width=${1.0*value/self.maxPrio * 100} fill='${Prio.colourScale("Unknown")}' />`
             let xpos = 0
             if (dc['sprio.JOBID']) {
-              for (let w of self.weights) {
+              for (let w of Prio.weights) {
                 //let v = +self.configAsDict[w[0]] * dc[w[1]]
                 let v = dc[w[1]]
                 let width = 1.0*v/self.maxPrio * 100
-                str += `<rect x=${xpos} height=20 width=${width} fill='${colourScale(w[0])}' />`
+                str += `<rect x=${xpos} height=20 width=${width} fill='${Prio.colourScale(w[1])}' />`
                 xpos += width
               }
             }
