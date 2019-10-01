@@ -8,6 +8,7 @@
                :forceSyncScrolling="true"
                :column-options="columns"
                :sort="sorter"
+               :row-formatter="rowFormatter"
                @before-init='beforeInit'
                @after-init='afterInit'
                @grid-dbl-click='dblClick'
@@ -98,6 +99,22 @@ export default class Share extends Vue {
     get dt () {
         return new Date(this.$global.sshare.updated)
     }
+    get highlightIDs() {
+        let res = {}
+        if (!this.$global.myUser)
+            return res
+        this.allRows.forEach(row => {
+            if (row.User.includes(this.$global.myUser)) {
+                // This row matches.  Add it, and all its parents
+                res[row.id]=1
+                while (row._parent !== null) {
+                    row = this.originalRows[row._parent]
+                    res[row.id]=1
+                }
+            }
+        })
+        return res
+    }
 
     sorter(e,args) {
         const sortCol = args.sortCols[0]
@@ -127,6 +144,15 @@ export default class Share extends Vue {
         })
     }
 
+    rowFormatter(row) {
+        if (row.id in this.highlightIDs) {
+            return {cssClasses: 'highlight'}
+        } else {
+            return null
+        }
+    }
+
+
     filterRows(item) {
         while (item._parent!==null) {
             item = this.originalRows[item._parent]
@@ -146,18 +172,21 @@ export default class Share extends Vue {
         this.$refs.slimgrid.dataView.setFilter(this.filterRows)
     }
 
-    dblClick(e, args) {
-        let item = this.$refs.slimgrid.dataView.getItem(args.row);
+    toggleRow(row) {
+        let item = this.$refs.slimgrid.dataView.getItem(row);
         item._collapsed = !item._collapsed
+        this.$refs.slimgrid.slickGrid.invalidateAllRows()
         this.$refs.slimgrid.dataView.refresh()
+    }
+
+    dblClick(e, args) {
+        this.toggleRow(args.row)
         e.stopImmediatePropagation()
     }
 
     click(e, args) {
         if (e.target.classList.contains("toggle")) {
-            let item = this.$refs.slimgrid.dataView.getItem(args.row);
-            item._collapsed = !item._collapsed
-            this.$refs.slimgrid.dataView.refresh()
+            this.toggleRow(args.row)
             e.stopImmediatePropagation()
         }
     }
@@ -191,4 +220,9 @@ div >>> .toggle.expand {
 div >>> .toggle.collapse {
     background: url(/collapse.gif) no-repeat center center;
 }
+
+div >>> .highlight {
+  background: #bbb;
+}
+
 </style>
