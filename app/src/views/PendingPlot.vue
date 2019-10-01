@@ -99,7 +99,7 @@ export default class PendingPlot extends Vue {
     }
 
     hideTip() {
-        //this.styleTip = null
+        this.styleTip = null
     }
 
     @Watch('queue')
