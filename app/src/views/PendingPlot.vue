@@ -118,6 +118,7 @@ export default class PendingPlot extends Vue {
     get queue () {
         let res = this.$global.queue.data.filter(x => x.STATE==this.state &&
                                                       x.PARTITION==this.partition &&
+                                                      x.Reason=='Priority' &&
                                                       x.PRIORITY>0)
         res.sort((a,b) => b.PRIORITY - a.PRIORITY)
         return res

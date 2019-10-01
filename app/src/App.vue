@@ -92,12 +92,25 @@ export default class App extends Vue {
     processQueue(queue) {
         queue.data.forEach((r, idx) => {
             r.id = idx
+            // Rename some columns
+            for (let [newKey, oldKey] of Object.entries({CPUS: "NumCPUs",
+                                                         NODES: "NumNodes",
+                                                         USER: "UserId",
+                                                         JOBID: "JobId",
+                                                         STATE: "JobState",
+                                                         PARTITION: "Partition",
+                                                         PRIORITY:"Priority"})) {
+                r[newKey] = r[oldKey]
+                delete r[oldKey]
+            }
+            r.USER = r.USER.replace(/\(.*/, '')
             // Create numeric columns as appropriate
-            for (var key of ["CPUS","NODES","PRIORITY",
+            for (var key of ["CPUS","PRIORITY",
                              "sprio.AGE","sprio.FAIRSHARE","sprio.JOBSIZE",
                              "sprio.PARTITION","sprio.QOS"]) {
                 r[key] = +r[key]
             }
+            r.NODES = parseInt(r.NODES)
         })
     }
 

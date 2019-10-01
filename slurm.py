@@ -47,6 +47,10 @@ class Queue:
         self.data = []
         self.prio = []
         self.updated = None
+        self.wanted_keys = ('JobId JobName UserId GroupId Priority Nice Account QOS '
+                           'JobState Reason Requeue Restarts RunTime TimeLimit '
+                           'SubmitTime AccrueTime StartTime EndTime RunTime '
+                           'Partition AllocNode NodeList NumNodes NumCPUs NumTasks').split(' ')
 
     def read(self):
         self._read_prio()
@@ -57,7 +61,7 @@ class Queue:
             prio_by_id[r['JOBID']] = r
         keys = self.prio[0].keys()
         for idx, r in enumerate(self.data):
-            id = r['JOBID']
+            id = r['JobId']
             if id in prio_by_id:
                 for key, value in prio_by_id[id].items():
                     self.data[idx]["sprio."+key] = value
@@ -81,15 +85,23 @@ class Queue:
 
     def _read_queue(self):
         if self.test:
-            # squeue -o "$(echo '%i\t%P\t%j\t%u\t%T\t%M\t%l\t%D\t%R\t%Q\t%C')" > squeue.dmp
-            reader = open('test-data/squeue.dmp')
+            # scontrol show job > scontrol-show-job.dmp
+            reader = open('test-data/scontrol-show-job.dmp')
         else:
-            flds = "%i\t%P\t%j\t%u\t%T\t%M\t%l\t%D\t%R\t%Q\t%C"
-            cmd = "squeue -o '{}'".format(flds)
+            cmd = "scontrol show job"
             p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, close_fds=True)
             reader = codecs.iterdecode(p.stdout, 'latin-1')
 
-        self.data = list(csv.DictReader(reader, delimiter='\t'))
+        # Parse the data
+        data = []
+        for line in reader:
+            if line.startswith('JobId='):
+                data.append({})
+            for (key, value) in re.findall(r'(\S+)=(\S+)', line):
+                if key in self.wanted_keys:
+                    data[-1][key] = value
+
+        self.data = data
 
 def log(str):
     sys.stderr.write(str + "\n")

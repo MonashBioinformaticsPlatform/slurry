@@ -2,7 +2,7 @@
   <div class="home">
     <datetime :datetime="dt"/>
     <h1>Queue</h1>
-    Max : {{maxPrio}}
+    Max Priority : {{maxPrio}}
     <slim-grid ref='slimgrid'
                :data="queue"
                :explicit-columns="explicitColumns"
@@ -93,15 +93,27 @@ export default class Queue extends Vue {
       'PARTITION': {
         width: 100,
         order: 5,
-        },
+      },
       'STATE' : {
         width: 100,
         order: 6,
       },
-      'NAME': { width: 150, order: 7 },
-      'NODELIST(REASON)': { width: 150, order: 8 },
-      'TIME': {width: 100, order: 9 },
-      'TIME_LIMIT': {width: 100, order: 10 },
+      'JobName': { width: 150, order: 7 },
+
+      'NodeList(Reason)': {
+        width: 150,
+        order: 8,
+        formatter(row, cell, value, cd, dc) {
+          if (dc.NodeList=="(null)")
+            return `(${dc.Reason})`
+          else
+            return dc.NodeList
+        }
+      },
+      'RunTime': {width: 100, order: 9 },
+      'TimeLimit': {width: 100, order: 10 },
+      'SubmitTime': {width: 150, order: 10, cssClass: 'monospace right' },
+      'StartTime': {width: 150, order: 10, cssClass: 'monospace right' },
       'sprio.AGE': {width: 100, order: 11},
       'sprio.FAIRSHARE': {width: 100, order: 12},
       'sprio.JOBSIZE': {width: 100, order: 13},
@@ -163,7 +175,7 @@ export default class Queue extends Vue {
     //console.log("mouse-out",args)
   }
 
-  mounted() {
+  created() {
     this.columns = this.makeColumns()
     this.explicitColumns = Object.keys(this.columns).filter(x => x!="*")
   }
@@ -188,6 +200,10 @@ div >>> .highlight {
 
 div >>> .constant {
   background: #f8fafc;
+}
+
+div >>> .monospace {
+  font-family: monospace;
 }
 
 </style>
