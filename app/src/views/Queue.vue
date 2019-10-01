@@ -103,12 +103,6 @@ export default class Queue extends Vue {
       'NodeList(Reason)': {
         width: 150,
         order: 8,
-        formatter(row, cell, value, cd, dc) {
-          if (dc.NodeList=="(null)")
-            return `(${dc.Reason})`
-          else
-            return dc.NodeList
-        }
       },
       'RunTime': {width: 100, order: 9 },
       'TimeLimit': {width: 100, order: 10 },

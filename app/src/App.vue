@@ -114,6 +114,8 @@ export default class App extends Vue {
                 r[key] = +r[key]
             }
             r.NODES = parseInt(r.NODES)
+
+            r['NodeList(Reason)'] = r.NodeList=='(null)' ? `(${r.Reason})` : r.NodeList
         })
     }
 
