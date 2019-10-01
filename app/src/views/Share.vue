@@ -1,6 +1,10 @@
 <template>
   <div class="home">
-    <datetime :datetime="dt" />
+    <div>
+        <datetime :datetime="dt" />
+        <a style='clear: right; float:right; font-size: small' target='_blank'
+           href='https://slurm.schedmd.com/fair_tree.html#fairshare'>Fair Tree documentation</a>
+    </div>
     <h1>Share</h1>
     <slim-grid ref='slimgrid'
                :data="allRows"
