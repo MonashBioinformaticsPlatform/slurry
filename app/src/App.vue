@@ -83,8 +83,11 @@ export default class App extends Vue {
 
             // Create numeric columns as appropriate
             for (var key of ["RawShares","NormShares","RawUsage","NormUsage",
-                             "EffectvUsage","FairShare"]) {
-                r[key] = +r[key]
+                             "EffectvUsage","FairShare", 'LevelFS']) {
+                if (r[key] == 'inf')
+                    r[key] = Number.POSITIVE_INFINITY
+                else
+                    r[key] = +r[key]
             }
         })
     }
