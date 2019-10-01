@@ -5,6 +5,7 @@
     Max : {{maxPrio}}
     <slim-grid ref='slimgrid'
                :data="queue"
+               :explicit-columns="explicitColumns"
                :column-options="columns"
                :row-formatter="rowFormatter"
                :downloadable="false"
@@ -33,11 +34,23 @@ import * as Prio from '@/assets/prio-weights'
 export default class Queue extends Vue {
   maxPrio = 0
   columns = {}
+  explicitColumns=[]
 
   makeColumns() {
     let self = this
 
     return {
+      'rank': {
+        width: 50,
+        order: 0,
+        cssClass: 'right constant',
+        headerInput: false,
+        headerFilter: false,
+        sortable: false,
+        formatter(row, cell, value, cd, dc) {
+          return row+1
+        }
+      },
       'JOBID': {
         width: 100,
         order: 0,
@@ -152,6 +165,7 @@ export default class Queue extends Vue {
 
   mounted() {
     this.columns = this.makeColumns()
+    this.explicitColumns = Object.keys(this.columns).filter(x => x!="*")
   }
 }
 </script>
@@ -170,6 +184,10 @@ div >>> .priority {
 
 div >>> .highlight {
   background: #bbb;
+}
+
+div >>> .constant {
+  background: #f8fafc;
 }
 
 </style>
