@@ -13,6 +13,7 @@
                @after-init='afterInit'
                @grid-dbl-click='dblClick'
                @grid-click='click'
+               @filters-generated='filtersGenerated'
                ></slim-grid>
   </div>
 </template>
@@ -20,7 +21,9 @@
 <script lang="js">
 import { Component, Vue, Watch } from 'vue-property-decorator';
 import SlimGrid from 'vue-slimgrid';
-import { Plugins } from "slickgrid-es6";
+
+
+//import { Plugins } from "slickgrid-es6";
 import datetime from '@/components/datetime.vue';
 
 
@@ -32,6 +35,8 @@ import datetime from '@/components/datetime.vue';
 export default class Share extends Vue {
     //selectionModel = new Plugins.RowSelectionModel()
     originalRows = null
+    filterCopy = null
+    keepIDs = null
 
     columns = {
         'Account' : {
@@ -100,11 +105,15 @@ export default class Share extends Vue {
         return new Date(this.$global.sshare.updated)
     }
     get highlightIDs() {
-        let res = {}
         if (!this.$global.myUser)
-            return res
+            return {}
+        return this.matchingIDs('User', this.$global.myUser)
+    }
+
+    matchingIDs(field, value) {
+        let res = {}
         this.allRows.forEach(row => {
-            if (row.User.includes(this.$global.myUser)) {
+            if (row[field].includes(value)) {
                 // This row matches.  Add it, and all its parents
                 res[row.id]=1
                 while (row._parent !== null) {
@@ -152,8 +161,35 @@ export default class Share extends Vue {
         }
     }
 
+    // Complicated mess to allow filtering by header input text boxes
+    @Watch('filterCopy', { deep: true })
+    onFilterChange() {
+        // Header filters have changed.  Refilter
+        this.keepIDs = null
+        for (var columnId in this.filterCopy) {
+            if (columnId !== undefined && this.filterCopy[columnId] !== "") {
+                var filterVal = this.filterCopy[columnId].toLowerCase()
+                var ids = this.matchingIDs(columnId, filterVal)
+                if (!this.keepIDs)
+                    this.keepIDs = ids
+                else {
+                    for (let k in this.keepIDs) {
+                        if (!(k in ids))
+                            delete this.keepIDs[k]
+                    }
+                }
+            }
+        }
+
+        this.$refs.slimgrid.dataView.refresh()
+    }
 
     filterRows(item) {
+        // First check for any header filters
+        if (this.keepIDs && !(item.id in this.keepIDs))
+            return false
+
+        // Now check if the row is hidden by "collapsing"
         while (item._parent!==null) {
             item = this.originalRows[item._parent]
             if (item._collapsed)
@@ -170,6 +206,10 @@ export default class Share extends Vue {
 
     afterInit(args) {
         this.$refs.slimgrid.dataView.setFilter(this.filterRows)
+    }
+2
+    filtersGenerated() {
+        this.filterCopy = this.$refs.slimgrid.filters
     }
 
     toggleRow(row) {
