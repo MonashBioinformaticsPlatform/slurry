@@ -29,7 +29,7 @@ def send_sshare():
         share.read_info()
         log("Read sshare {} lines".format(len(share.data)))
 
-    return jsonify({"data": share.data, "updated": conf.updated.isoformat()})
+    return jsonify({"data": share.data, "updated": share.updated.isoformat()})
 
 @app.route('/api/slurm/queue')
 def send_queue():
@@ -37,7 +37,7 @@ def send_queue():
         queue.read()
         log("Read queue {} lines".format(len(queue.data)))
 
-    return jsonify({"data": queue.data, "updated": conf.updated.isoformat()})
+    return jsonify({"data": queue.data, "updated": queue.updated.isoformat()})
 
 @app.route('/', defaults={'file': 'index.html'})
 @app.route('/<path:file>')
