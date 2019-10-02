@@ -128,6 +128,16 @@ export default class Queue extends Vue {
     }
   }
 
+  @Watch('globalMyUser')
+  onUserChange() {
+    this.$refs.slimgrid.slickGrid.invalidateAllRows()
+    this.$refs.slimgrid.slickGrid.render()
+  }
+
+  get globalMyUser() {
+    return this.$global.myUser
+  }
+
   get config() {
     return this.$global.config.data
   }

@@ -46,6 +46,23 @@ export default class PendingPlot extends Vue {
         return res
     }
 
+    markUser() {
+        let markData = this.queue.map((row,idx) => { return {row:row, idx:idx} })
+                                 .filter(x => this.highlight(x.row))
+        let marks = d3.select("svg",this.$el)
+                      .selectAll("line.user")
+                      .data(markData, x => x.idx)
+        marks.exit().remove()
+        marks.enter()
+             .append("line")
+               .attr("class", "user")
+               .attr("x1", x => 0)
+               .attr("x2", x => 40)
+               .attr("y1", x => x.idx)
+               .attr("y2", x => x.idx)
+               .attr("stroke", "black")
+    }
+
     renderPlot() {
         d3.select("#plot",this.$el).html("")
         let svg = d3.select("#plot",this.$el).append("svg")
@@ -61,7 +78,7 @@ export default class PendingPlot extends Vue {
                             .append("g")
                             .attr("class","row")
         newLines.append("line")
-               .attr("x1", x => this.highlight(x) ? 0 : xScale(0))
+               .attr("x1", x => xScale(0))
                .attr("x2", x => xScale(x.PRIORITY))
                .attr("y1", (x, i) => i)
                .attr("y2", (x, i) => i)
@@ -78,6 +95,7 @@ export default class PendingPlot extends Vue {
                .attr("stroke", x => Prio.colourScale(x.type))
         svg.on('mousemove', () => this.showTip(d3.mouse(svg.node())))
         svg.on('mouseout', this.hideTip)
+        this.markUser()
     }
 
     highlight(row) {
@@ -105,6 +123,15 @@ export default class PendingPlot extends Vue {
     @Watch('queue')
     queueChanged() {
         this.renderPlot()
+    }
+
+    @Watch('globalMyUser')
+    onUserChange() {
+        this.markUser()
+    }
+
+    get globalMyUser() {
+        return this.$global.myUser
     }
 
     get config() {

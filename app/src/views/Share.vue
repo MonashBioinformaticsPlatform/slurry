@@ -19,6 +19,17 @@
                @grid-click='click'
                @filters-generated='filtersGenerated'
                ></slim-grid>
+    <div v-show='false'>
+        Idea for FairShare.  Start at root of tree.
+        All first level sorted by USAGE/SHARE.
+        Then do this at each node of the tree.
+        So, get a full list of all users.  Users within an Account are sorted contiguously.
+        (Allow ties in the ranking)
+        Given this complete ranking.  All users are assigned a FairShare equal to the rank/number of users
+        Final value for the sprio.FAIRSHARE = FairShare * PriorityWeightFairShare     (Which is 50000 on m3)
+        On M3 we have ~ 1893 users.
+
+    </div>
   </div>
 </template>
 
@@ -202,6 +213,16 @@ export default class Share extends Vue {
         return true
     }
 
+    @Watch('globalMyUser')
+    onUserChange() {
+        this.$refs.slimgrid.slickGrid.invalidateAllRows()
+        this.$refs.slimgrid.slickGrid.render()
+    }
+
+    get globalMyUser() {
+        return this.$global.myUser
+    }
+
     beforeInit(args) {
         // Delete the standard contextmenu handler.  I don't like it since it disables right-click
         delete this.$refs.slimgrid.events.slickGrid.onContextMenu
@@ -211,7 +232,7 @@ export default class Share extends Vue {
     afterInit(args) {
         this.$refs.slimgrid.dataView.setFilter(this.filterRows)
     }
-2
+
     filtersGenerated() {
         this.filterCopy = this.$refs.slimgrid.filters
     }
