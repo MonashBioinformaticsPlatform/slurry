@@ -1,4 +1,4 @@
-name: flask
+name: slurry
 channels:
   - conda-forge
   - bioconda
@@ -6,3 +6,4 @@ channels:
   - defaults
 dependencies:
   - flask>=1.1
+  - nodejs
