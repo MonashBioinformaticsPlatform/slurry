@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from flask import Flask, send_file, jsonify
+from flask import Flask, send_file, jsonify, abort
 from datetime import datetime, timedelta
 
 from slurm import *
@@ -42,6 +42,8 @@ def send_queue():
 @app.route('/', defaults={'file': 'index.html'})
 @app.route('/<path:file>')
 def index(file):
+    if '..' in file:
+        abort(404)
     return send_file('app/dist/'+file)
 
 if __name__ == '__main__':
