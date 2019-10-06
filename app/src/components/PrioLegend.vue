@@ -27,6 +27,7 @@ export default class PrioLegend extends Vue {
 <style scoped>
 .plot {
     margin-top: 50px;
+    width: 19ex;
 }
 ul {
     padding-left: 0;

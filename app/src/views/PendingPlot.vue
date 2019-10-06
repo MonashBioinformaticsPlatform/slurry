@@ -2,7 +2,16 @@
     <div class="home">
         <datetime :datetime="dt"/>
         <h1>Pending</h1>
-        State: {{state}}.  Partition: {{partition}}.  Num entries : {{queue.length}}
+
+        <div class='slider'>
+            <label for="size">Size</label>
+            <input name="size" type="range" min="1" max="15" v-model:value='sizeSlider' />
+        </div>
+
+        <span>
+            State: {{state}}.  Partition: {{partition}}.  Num entries : {{queue.length}}
+        </span>
+
         <div id='plot'></div>
         <div class='tip' v-show='styleTip!=null' :style='styleTip'>
             <table>
@@ -30,17 +39,25 @@ import * as Prio from '@/assets/prio-weights'
     },
 })
 export default class PendingPlot extends Vue {
+    sizeSlider = 1
     styleTip = null
     textTip = []
     state = "PENDING"
     partition = "comp"
 
+    @Watch('sizeSlider')
+    onSliderChange() {
+        d3.select("svg",this.$el)
+           .attr('height',this.sizeSlider*this.queue.length)
+        localStorage.setItem('sizeSlider', this.sizeSlider)
+    }
+
     process_row(row, idx) {
         let last_prio=0
         let res = Prio.weights.map(w => {
-            let next_prio = last_prio+row[w[1]]
-            let r = { type: w[1], idx: idx, prio1: last_prio, prio2: next_prio }
-            last_prio = next_prio
+            let prio = row[w[1]]
+            let r = { type: w[1], idx: idx, prio1: last_prio, prio: prio }
+            last_prio = last_prio + prio
             return r
         })
         return res
@@ -54,45 +71,55 @@ export default class PendingPlot extends Vue {
                       .data(markData, x => x.idx)
         marks.exit().remove()
         marks.enter()
-             .append("line")
+             .append("rect")
                .attr("class", "user")
-               .attr("x1", x => 0)
-               .attr("x2", x => 40)
-               .attr("y1", x => x.idx)
-               .attr("y2", x => x.idx)
-               .attr("stroke", "black")
+               .attr("x", x => 0)
+               .attr("width", x => 10)
+               .attr("y", x => 10*x.idx)
+               .attr("height", x => 10)
+               .attr("fill", "black")
     }
 
     renderPlot() {
         d3.select("#plot",this.$el).html("")
         let svg = d3.select("#plot",this.$el).append("svg")
-        svg.attr("height", this.queue.length)
-           .attr("width", "80%")
+        svg.attr("width","95%")
+           .attr('height',this.sizeSlider*this.queue.length)
+           .attr("preserveAspectRatio","none")
+           .attr("viewBox", `0 0 110 ${10*this.queue.length}`)
 
         let xScale = d3.scaleLinear()
-                       .range([40,svg.node().clientWidth])
+                       .range([0, 100])
                        .domain([0, this.maxPrio])
         let lines = svg.selectAll("g.row")
                        .data(this.queue)
         let newLines = lines.enter()
                             .append("g")
                             .attr("class","row")
-        newLines.append("line")
-               .attr("x1", x => xScale(0))
-               .attr("x2", x => xScale(x.PRIORITY))
-               .attr("y1", (x, i) => i)
-               .attr("y2", (x, i) => i)
-               .attr("stroke", Prio.colourScale("Unknown"))
+        newLines.append("rect")
+               .attr("x", x => 10+xScale(0))
+               .attr("width", x => xScale(x.PRIORITY))
+               .attr("y", (x, i) => 10*i)
+               .attr("height", 10)
+               .attr("fill", Prio.colourScale("Unknown"))
         newLines.selectAll("line.sub")
               .data((d,idx) => this.process_row(d,idx))
               .enter()
-              .append("line")
+              .append("rect")
                .attr("class","sub")
-               .attr("x1", x => xScale(x.prio1))
-               .attr("x2", x => xScale(x.prio2))
-               .attr("y1", x => x.idx)
-               .attr("y2", x => x.idx)
-               .attr("stroke", x => Prio.colourScale(x.type))
+               .attr("x", x => 10+xScale(x.prio1))
+               .attr("width", x => xScale(x.prio))
+               .attr("y", (x, i) => 10*x.idx)
+               .attr("height", 10)
+               .attr("fill", x => Prio.colourScale(x.type))
+
+        newLines.append("line")
+               .attr("x1", x => 10+xScale(0))
+               .attr("x2", x => 10+xScale(x.PRIORITY))
+               .attr("y1", (x, i) => 10*i)
+               .attr("y2", (x, i) => 10*i)
+               .attr("stroke", "#ddd")
+
         svg.on('mousemove', () => this.showTip(d3.mouse(svg.node())))
         svg.on('mouseout', this.hideTip)
         this.markUser()
@@ -103,7 +130,7 @@ export default class PendingPlot extends Vue {
     }
 
     showTip(loc) {
-        let y = Math.floor(loc[1])
+        let y = Math.floor(loc[1]/10)
         if (y<0)
             y=0
         let row = this.queue[y]
@@ -111,7 +138,7 @@ export default class PendingPlot extends Vue {
         this.textTip = Prio.weights.map(w => [w[1], row[w[1]]])
         this.textTip.unshift(["Priority", row.PRIORITY])
         this.textTip.unshift(["User", row.USER])
-        this.textTip.unshift(["Rank", y])
+        this.textTip.unshift(["Rank", y + 1])
         this.textTip.push(["CPUs", row.CPUS])
         this.textTip.push(["Time Limit", row.TIME_LIMIT])
     }
@@ -159,6 +186,9 @@ export default class PendingPlot extends Vue {
     }
 
     mounted() {
+        if (localStorage.sizeSlider) {
+            this.sizeSlider = localStorage.getItem('sizeSlider')
+        }
         this.renderPlot()
     }
 }
@@ -166,6 +196,14 @@ export default class PendingPlot extends Vue {
 
 <style src="vue-slimgrid/dist/slimgrid.css"></style>
 <style scoped>
+.slider {
+    float:right;
+    font-size: 14px;
+}
+.slider label {
+    vertical-align: top;
+}
+
 div >>> .right {
     text-align: right;
 }

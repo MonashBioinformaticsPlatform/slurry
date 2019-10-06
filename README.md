@@ -30,7 +30,7 @@ Run the backend in test mode.  This will read files from `test-data/` rather tha
 
     (cd app ; npm run build) && ./server.py
 
-Note: I recommend against putting this on a publicly webserver as it leaks information such as usernames, and cluster usage.
+Note: I recommend against putting this on a publicly accessible webserver as it leaks information such as usernames, and cluster usage.
 
 
 

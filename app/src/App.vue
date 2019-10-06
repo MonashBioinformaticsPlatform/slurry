@@ -1,7 +1,7 @@
 <template>
     <div id="app">
-        <div v-if="loaded">
-            <div id="nav">
+        <div class='flex-grid' v-if="loaded">
+            <div id="nav" class='col1'>
                 <router-link to="/running">Running</router-link>
                 <router-link to="/pending">Pending</router-link>
                 <router-link to="/queue">Queue</router-link>
@@ -11,8 +11,10 @@
                 <input id='user-input' text='text' placeholder="user" v-model='myUser'/>
                 <prio-legend />
             </div>
-            <h1 v-if='priority_flags != "FAIR_TREE"'>PriorityFlags != FAIR_TREE</h1>
-            <router-view />
+            <div class='col2'>
+                <h1 v-if='priority_flags != "FAIR_TREE"'>PriorityFlags != FAIR_TREE</h1>
+                <router-view />
+            </div>
         </div>
         <div v-if="!loaded">
             <h1>Loading...</h1>
@@ -149,9 +151,18 @@ export default class App extends Vue {
   text-align: center;
   color: #2c3e50;
 }
-#nav {
+/* #nav {
   float: left;
   margin: 0 50px 0 10px;
+} */
+.flex-grid {
+    display: flex;
+}
+.col1 {
+    flex: 0;
+}
+.col2 {
+    flex: 1;
 }
 
 #nav a {
