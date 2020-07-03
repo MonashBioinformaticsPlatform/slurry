@@ -19,7 +19,7 @@ installed, run the following to create test-data files, and copy the resulting
 
 Build frontend for development, and watch for changes
 
-    (cd app ; ./node_modules/.bin/vue-cli-service build --mode debug --watch)
+    (cd app && npm install && ./node_modules/.bin/vue-cli-service build --mode debug --watch)
 
 Run the backend in test mode.  This will read files from `test-data/` rather than accessing slurm
 
@@ -28,7 +28,7 @@ Run the backend in test mode.  This will read files from `test-data/` rather tha
 
 ### Deploying
 
-    (cd app ; npm run build) && ./server.py
+    (cd app && npm install && npm run build) && ./server.py
 
 Note: I recommend against putting this on a publicly accessible webserver as it leaks information such as usernames, and cluster usage.
 
