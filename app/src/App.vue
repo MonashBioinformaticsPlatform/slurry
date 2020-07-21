@@ -12,7 +12,6 @@
                 <prio-legend />
             </div>
             <div class='col2'>
-                <h1 v-if='priority_flags != "FAIR_TREE"'>PriorityFlags != FAIR_TREE</h1>
                 <router-view />
             </div>
         </div>
