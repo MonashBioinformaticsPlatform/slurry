@@ -67,7 +67,7 @@ export default class PendingPlot extends Vue {
         let markData = this.queue.map((row,idx) => { return {row:row, idx:idx} })
                                  .filter(x => this.highlight(x.row))
         let marks = d3.select("svg",this.$el)
-                      .selectAll("line.user")
+                      .selectAll("rect.user")
                       .data(markData, x => x.idx)
         marks.exit().remove()
         marks.enter()
