@@ -1,21 +1,31 @@
 #!/usr/bin/env python
 
+import argparse
+
 from flask import Flask, send_file, jsonify, abort
 from datetime import datetime, timedelta
 
 from slurm import *
 
-test=False
+parser = argparse.ArgumentParser(
+    description='Webserver for Slurry visualisation of slurm queue',
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-if len(sys.argv)>1 and sys.argv[1]=='-d':
-    test=True
+parser.add_argument('-d', '--debug', action="store_true",
+    help='Run in debug mode.  Uses test-data/ instead of the slurm commands')
+parser.add_argument('-a', '--addr', default='0.0.0.0',
+    help='Host to listen on')
+parser.add_argument('-p', '--port', default=5000,
+    help='Port to listen on')
 
-conf = SlurmConfig(test)
+args = parser.parse_args()
+
+conf = SlurmConfig(args.debug)
 log("Read config {} settings".format(len(conf.data)))
 
-share = ShareInfo(test)
+share = ShareInfo(args.debug)
 
-queue = Queue(test)
+queue = Queue(args.debug)
 
 app = Flask(__name__)
 
@@ -47,5 +57,4 @@ def index(file):
     return send_file('app/dist/'+file)
 
 if __name__ == '__main__':
-#    app.run(debug=test, host='0.0.0.0')
-    app.run(debug=test, host='localhost')
+    app.run(debug=args.debug, host='localhost',port=args.port)
