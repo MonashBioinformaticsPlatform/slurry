@@ -5,6 +5,7 @@
       <slim-grid ref='slimgrid'
                 :data="config"
                 :downloadable="false"
+                :column-options="columns"
                 @after-init='afterInit'
                 ></slim-grid>
     </div>
@@ -21,17 +22,45 @@ import SlimGrid from 'vue-slimgrid';
   },
 })
 export default class Running extends Vue {
+  columns = {
+    'CPUS': {
+      order: 0,
+    },
+    'NODES': {
+      order: 1,
+    },
+    'USER': {
+      order: 2,
+    },
+    'PARTITIONS' : {
+      order: 3,
+      width: 200,
+      cssClass: 'left',
+      formatter(row, cell, value, cd, dc) {
+        let res = ""
+        for (const [name, num] of Object.entries(value)) {
+          res += `${name}:${num}  `
+        }
+        return res
+      }
+    },
+  }
+
   get config () {
     var by_user = {}
     for (var row of this.$global.queue.data) {
         if (row.STATE == 'RUNNING') {
             if (!(row.USER in by_user)) {
-                by_user[row.USER] = {CPUS:0, NODES:0}
+                by_user[row.USER] = {CPUS:0, NODES:0,PARTITIONS:{}}
             }
-            by_user[row.USER].CPUS += row.CPUS
-            by_user[row.USER].NODES += row.NODES
-            by_user[row.USER].USER = row.USER
-            by_user[row.USER].id = row.USER
+            let u = by_user[row.USER]
+            u.CPUS += row.CPUS
+            u.NODES += row.NODES
+            u.USER = row.USER
+            u.id = row.USER
+            if (!(row.PARTITION in u.PARTITIONS))
+              u.PARTITIONS[row.PARTITION] = 0
+            u.PARTITIONS[row.PARTITION] += 1
         }
     }
     return Object.values(by_user)
@@ -50,7 +79,10 @@ export default class Running extends Vue {
 
 <style src="vue-slimgrid/dist/slimgrid.css"></style>
 <style scoped>
+div >>> .left {
+  text-align: left;
+}
 div >>> .slim-container {
-    width: 520px;
+    width: 720px;
 }
 </style>
