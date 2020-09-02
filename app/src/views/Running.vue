@@ -1,5 +1,6 @@
 <template>
   <div class="home">
+    <datetime :datetime="dt"/>
     <h1>Running</h1>
     <div class='slim-container'>
       <slim-grid ref='slimgrid'
@@ -15,10 +16,11 @@
 <script lang="js">
 import { Component, Vue, Watch } from 'vue-property-decorator';
 import SlimGrid from 'vue-slimgrid';
+import datetime from '@/components/datetime.vue'
 
 @Component({
   components: {
-    SlimGrid,
+    SlimGrid, datetime
   },
 })
 export default class Running extends Vue {
@@ -74,6 +76,9 @@ export default class Running extends Vue {
     args.grid.setSortColumn(sortCol, false)
   }
 
+  get dt () {
+    return new Date(this.$global.queue.updated)
+  }
 }
 </script>
 
