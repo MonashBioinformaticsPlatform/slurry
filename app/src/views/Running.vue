@@ -1,11 +1,13 @@
 <template>
   <div class="home">
     <h1>Running</h1>
-    <slim-grid ref='slimgrid'
-               :data="config"
-               :downloadable="false"
-               @after-init='afterInit'
-               ></slim-grid>
+    <div class='slim-container'>
+      <slim-grid ref='slimgrid'
+                :data="config"
+                :downloadable="false"
+                @after-init='afterInit'
+                ></slim-grid>
+    </div>
   </div>
 </template>
 
@@ -47,3 +49,8 @@ export default class Running extends Vue {
 </script>
 
 <style src="vue-slimgrid/dist/slimgrid.css"></style>
+<style scoped>
+div >>> .slim-container {
+    width: 520px;
+}
+</style>

@@ -2,10 +2,12 @@
     <div class="home">
         <datetime :datetime="dt"/>
         <h1>Config</h1>
-        <slim-grid :data="config"
-                   :downloadable="false"
-                   :column-options="columns"
-                   ></slim-grid>
+        <div class='slim-container'>
+            <slim-grid :data="config"
+                       :downloadable="false"
+                       :column-options="columns"
+                       ></slim-grid>
+        </div>
     </div>
 </template>
 
@@ -35,7 +37,7 @@ export default class Config extends Vue {
     }
 
     get config () {
-        return this.$global.config.data
+        return this.$global.config.config
     }
 
     get dt () {
@@ -48,6 +50,9 @@ export default class Config extends Vue {
 <style scoped>
 div >>> .left {
   text-align: left;
+}
+div >>> .slim-container {
+    width: 520px;
 }
 
 </style>

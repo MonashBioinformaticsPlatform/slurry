@@ -7,6 +7,7 @@
                 <router-link to="/queue">Queue</router-link>
                 <router-link to="/share">Share</router-link>
                 <router-link to="/config">Config</router-link>
+                <router-link to="/qos"><small>QOS/Partitions</small></router-link>
                 <router-link to="/about">About</router-link>
                 <input id='user-input' text='text' placeholder="user" v-model='myUser'/>
                 <prio-legend />
@@ -36,66 +37,94 @@ import PrioLegend from '@/components/PrioLegend.vue'; // @ is an alias to /src
 })
 export default class App extends Vue {
     loaded = false
-    config = null
-    sshare = null
-    queue = null
+    configLoaded = null
+    sshareLoaded = null
+    queueLoaded = null
     priority_flags = ""
     myUser = ""
 
     checkLoaded() {
-        if (this.config && this.sshare && this.queue) {
-            this.processConfig(this.config)
-            this.processQueue(this.queue)
-            this.processShare(this.sshare)
-
-            this.$global.config = this.config
-            this.$global.sshare = this.sshare
-            this.$global.queue = this.queue
+        if (this.configLoaded && this.sshareLoaded && this.queueLoaded) {
+            this.$global.config = this.processConfig(this.configLoaded)
+            this.$global.sshare = this.processShare(this.sshareLoaded)
+            this.$global.queue = this.processQueue(this.queueLoaded)
             this.loaded = true
         }
     }
 
     processConfig(config) {
-        config.data.forEach((r, idx) => {
-            r.id = idx
+        // console.log("qos ", config.qos)
+        // console.log("partitions", config.partitions)
+        let res_config = config.config.map((r, idx) => {
+            let o = {}
+            o.id = idx
+            o.key = r.key
+            o.value = r.value
             if (r.key=='PriorityFlags')
                 this.priority_flags = r.value
+            return o
         })
+        let res_qos = config.qos.map((r,idx) => {
+            let o = {}
+            o.id = idx
+            Object.assign(o,r)
+            return o;
+        })
+        let res_partitions = config.partitions.map((r,idx) => {
+            let o = {}
+            o.id = idx
+            Object.assign(o,r)
+            return o;
+        })
+
+        return {config: res_config,
+                partitions: res_partitions,
+                qos: res_qos,
+                updated: config.updated
+                };
     }
 
     processShare(share) {
         let parents = []
-        share.data.forEach((r, idx) => {
-            r.id = idx
+        let last_o = null
+        let res = share.data.map((r, idx) => {
+            let o = {}
+            Object.assign(o, r)
+            o.id = idx
 
             // Fill in fields to represent the tree structure
-            let lvl = r.Account.match(/^\s*/)[0].length
-            r.Account = r.Account.substr(lvl)
+            let lvl = o.Account.match(/^\s*/)[0].length
+            o.Account = o.Account.substr(lvl)
             if (lvl>parents.length)
-                parents.unshift(idx-1)
+                parents.unshift(last_o)
             while (lvl < parents.length)
                 parents.shift()
-            r._parent = lvl==0 ? null : parents[0]
-            r._indent = lvl
-            r._collapsed = lvl>0
-            r._leaf = true
-            if (r._parent !== null)
-              share.data[r._parent]._leaf = false
+            o._parent = lvl==0 ? null : parents[0]
+            o._indent = lvl
+            o._collapsed = lvl>0
+            o._leaf = true
+            if (o._parent !== null)
+                o._parent._leaf = false
 
             // Create numeric columns as appropriate
-            for (var key of ["RawShares","NormShares","RawUsage","NormUsage",
+            for (let key of ["RawShares","NormShares","RawUsage","NormUsage",
                              "EffectvUsage","FairShare", 'LevelFS']) {
-                if (r[key] == 'inf')
-                    r[key] = Number.POSITIVE_INFINITY
+                if (o[key] == 'inf')
+                    o[key] = Number.POSITIVE_INFINITY
                 else
-                    r[key] = +r[key]
+                    o[key] = +o[key]
             }
+            last_o = o
+            return o
         })
+        return {data: res, updated: share.updated}
     }
 
     processQueue(queue) {
-        queue.data.forEach((r, idx) => {
-            r.id = idx
+        let res = queue.data.map((r, idx) => {
+            let o = {}
+            Object.assign(o, r)
+            o.id = idx
             // Rename some columns
             for (let [newKey, oldKey] of Object.entries({CPUS: "NumCPUs",
                                                          NODES: "NumNodes",
@@ -104,20 +133,23 @@ export default class App extends Vue {
                                                          STATE: "JobState",
                                                          PARTITION: "Partition",
                                                          PRIORITY:"Priority"})) {
-                r[newKey] = r[oldKey]
-                delete r[oldKey]
+                o[newKey] = o[oldKey]
+                delete o[oldKey]
             }
-            r.USER = r.USER.replace(/\(.*/, '')
+            o.PARTITION_LIST = o.PARTITION.split(',')
+            o.USER = o.USER.replace(/\(.*/, '')
             // Create numeric columns as appropriate
-            for (var key of ["CPUS","PRIORITY",
+            for (let key of ["CPUS","PRIORITY",
                              "sprio.AGE","sprio.FAIRSHARE","sprio.JOBSIZE",
                              "sprio.PARTITION","sprio.QOS"]) {
-                r[key] = +r[key]
+                o[key] = +o[key]
             }
-            r.NODES = parseInt(r.NODES)
+            o.NODES = parseInt(o.NODES)
 
-            r['NodeList(Reason)'] = r.NodeList=='(null)' ? `(${r.Reason})` : r.NodeList
+            o['NodeList(Reason)'] = r.NodeList=='(null)' ? `(${r.Reason})` : r.NodeList
+            return o
         })
+        return {data: res, updated: queue.updated}
     }
 
     @Watch('myUser')
@@ -132,11 +164,11 @@ export default class App extends Vue {
         }
 
         axios.get("/api/slurm/config")
-                .then(response => { this.config = response.data; this.checkLoaded() })
+                .then(response => { this.configLoaded = response.data; this.checkLoaded() })
         axios.get("/api/slurm/sshare")
-                .then(response => { this.sshare = response.data; this.checkLoaded() })
+                .then(response => { this.sshareLoaded = response.data; this.checkLoaded() })
         axios.get("/api/slurm/queue")
-                .then(response => { this.queue = response.data; this.checkLoaded() })
+                .then(response => { this.queueLoaded = response.data; this.checkLoaded() })
     }
 
 }

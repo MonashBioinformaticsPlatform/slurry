@@ -9,10 +9,19 @@
         </div>
 
         <span>
-            State: {{state}}.  Partition: {{partition}}.  Num entries : {{queue.length}}
+            State: {{state}}.
+            Partition: <select v-model='partition'>
+                <option v-for="p in partitions" :key="p.name" :value='p.name'>{{p.label}}</option>
+                </select>
+            Num entries : {{queue.length}}
         </span>
 
+        <div v-show='rendering>0'>
+            <h2>Rendering...</h2>
+            <Logo size='10%' style='margin-top:0%' />
+        </div>
         <div id='plot'></div>
+
         <div class='tip' v-show='styleTip!=null' :style='styleTip'>
             <table>
             <tr v-for='k in textTip'>
@@ -31,11 +40,12 @@ import SlimGrid from 'vue-slimgrid'
 import * as d3 from "d3"
 
 import datetime from '@/components/datetime.vue'
+import Logo from '@/components/Logo.vue'
 import * as Prio from '@/assets/prio-weights'
 
 @Component({
     components: {
-        SlimGrid,datetime
+        SlimGrid,datetime,Logo
     },
 })
 export default class PendingPlot extends Vue {
@@ -44,6 +54,7 @@ export default class PendingPlot extends Vue {
     textTip = []
     state = "PENDING"
     partition = "comp"
+    rendering=0
 
     @Watch('sizeSlider')
     onSliderChange() {
@@ -90,6 +101,12 @@ export default class PendingPlot extends Vue {
     }
 
     renderPlot() {
+        this.rendering+=1
+       setTimeout(this.renderPlotReal, 10)
+    }
+
+    renderPlotReal() {
+        let begin = Date.now()
         d3.select("#plot",this.$el).html("")
         let svg = d3.select("#plot",this.$el).append("svg")
         svg.attr("width","95%")
@@ -132,6 +149,8 @@ export default class PendingPlot extends Vue {
         svg.on('mousemove', () => this.showTip(d3.mouse(svg.node())))
         svg.on('mouseout', this.hideTip)
         this.markUser()
+        console.log(`Rendering the queue took ${Date.now()-begin}ms`)
+        this.rendering-=1
     }
 
     highlight(row) {
@@ -171,7 +190,7 @@ export default class PendingPlot extends Vue {
     }
 
     get config() {
-        return this.$global.config.data
+        return this.$global.config.config
     }
 
     get configAsDict() {
@@ -179,11 +198,13 @@ export default class PendingPlot extends Vue {
     }
 
     get queue () {
+        let begin = Date.now()
         let res = this.$global.queue.data.filter(x => x.STATE==this.state &&
-                                                      x.PARTITION==this.partition &&
+                                                      x.PARTITION_LIST.includes(this.partition) &&
                                                       x.Reason=='Priority' &&
                                                       x.PRIORITY>0)
         res.sort((a,b) => b.PRIORITY - a.PRIORITY)
+        //console.log("Queue filtering took",Date.now()-begin)
         return res
     }
     get dt () {
@@ -192,6 +213,24 @@ export default class PendingPlot extends Vue {
 
     get maxPrio() {
         return Math.max(... this.queue.map(x => x.PRIORITY))
+    }
+
+    get partitions() {
+        let res = this.$global.config.partitions.map(p => { return {name: p.PartitionName}})
+        let counts = {}
+        res.forEach(p => { counts[p.name] = 0 })
+        this.$global.queue.data.map(x => {
+            if (x.STATE==this.state && x.Reason=='Priority' && x.PRIORITY>0) {
+                x.PARTITION_LIST.map(p => counts[p] += 1)
+            }
+        })
+        res.forEach(p => {
+            let num = counts[p.name] || 0;
+            p.count = num
+            p.label = `${p.name} : ${num}`
+        })
+        res.sort((a,b) => b.count - a.count)
+        return res;
     }
 
     mounted() {

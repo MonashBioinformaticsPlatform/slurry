@@ -3,18 +3,20 @@
     <datetime :datetime="dt"/>
     <h1>Queue</h1>
     Max Priority : {{maxPrio}}
-    <slim-grid ref='slimgrid'
-               :data="queue"
-               :explicit-columns="explicitColumns"
-               :column-options="columns"
-               :row-formatter="rowFormatter"
-               :downloadable="false"
-               :forceSyncScrolling="true"
-               @data-view-update='dataViewUpdate'
-               @after-init='afterInit'
-               @mouse-enter='mouseEnter'
-               @mouse-leave='mouseLeave'
-               ></slim-grid>
+    <div class='slim-container'>
+      <slim-grid ref='slimgrid'
+                :data="queue"
+                :explicit-columns="explicitColumns"
+                :column-options="columns"
+                :row-formatter="rowFormatter"
+                :downloadable="false"
+                :forceSyncScrolling="true"
+                @data-view-update='dataViewUpdate'
+                @after-init='afterInit'
+                @mouse-enter='mouseEnter'
+                @mouse-leave='mouseLeave'
+                ></slim-grid>
+      </div>
   </div>
 </template>
 
@@ -139,7 +141,7 @@ export default class Queue extends Vue {
   }
 
   get config() {
-    return this.$global.config.data
+    return this.$global.config.config
   }
 
   get configAsDict() {
@@ -209,5 +211,9 @@ div >>> .constant {
 div >>> .monospace {
   font-family: monospace;
 }
+div.slim-container {
+    width: 1982px;
+}
+
 
 </style>

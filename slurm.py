@@ -41,6 +41,37 @@ class ShareInfo:
         self.data = list(csv.DictReader(reader, delimiter='|'))
         self.updated = datetime.now()
 
+class QOS:
+    def __init__(self, test=False):
+        self.test = test
+        if self.test:
+            reader = open('test-data/qos.dmp', mode='rb')
+        else:
+            p = subprocess.Popen("sacctmgr -p show qos", shell=True, stdout=subprocess.PIPE, close_fds=True)
+            reader = p.stdout
+
+        self.data = list(csv.DictReader(reader, delimiter='|'))
+        # Delete any empty key in the dicts
+        for d in self.data:
+            d.pop('',None)
+        self.updated = datetime.now()
+
+class Partition:
+    def __init__(self, test=False):
+        self.test = test
+        if self.test:
+            reader = open('test-data/partitions.dmp', mode='rb')
+        else:
+            p = subprocess.Popen("scontrol show -o partition", shell=True, stdout=subprocess.PIPE, close_fds=True)
+            reader = p.stdout
+        self.data = []
+        for line in reader:
+            line = line.decode('latin-1')
+            m = re.findall("(\S+)=(\S+)", line)
+            self.data.append(dict(m))
+        self.updated = datetime.now()
+
+
 class Queue:
     def __init__(self, test=False):
         self.test = test

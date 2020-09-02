@@ -5,6 +5,7 @@ import Queue from './views/Queue.vue'
 import Config from './views/Config.vue'
 import Running from './views/Running.vue'
 import PendingPlot from './views/PendingPlot.vue'
+import QOS from './views/QOS.vue'
 
 Vue.use(Router)
 
@@ -15,6 +16,7 @@ export default new Router({
     { path: '/config', name: 'config', component: Config },
     { path: '/running', name: 'running', component: Running },
     { path: '/pending', name: 'pending', component: PendingPlot },
+    { path: '/qos', name: 'qos', component: QOS },
     {
       path: '/about',
       name: 'about',

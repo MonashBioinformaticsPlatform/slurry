@@ -21,17 +21,30 @@ parser.add_argument('-p', '--port', default=5000,
 args = parser.parse_args()
 
 conf = SlurmConfig(args.debug)
-log("Read config {} settings".format(len(conf.data)))
+log("Read config setings : {}".format(len(conf.data)))
+
+partitions = Partition(args.debug)
+log("Read partitions ({}) : {}".format(
+    len(partitions.data),
+    " ".join(map(lambda d: d['PartitionName'], partitions.data))))
+
+qos = QOS(args.debug)
+log("Read QOS ({}) : {}".format(
+    len(qos.data),
+    " ".join(map(lambda d: d['Name'], qos.data))))
 
 share = ShareInfo(args.debug)
-
 queue = Queue(args.debug)
 
 app = Flask(__name__)
 
 @app.route('/api/slurm/config')
 def send_config():
-    return jsonify({"data": conf.data, "updated": conf.updated.isoformat()})
+    return jsonify({"config": conf.data,
+                    "qos": qos.data,
+                    "partitions": partitions.data,
+                    "updated": conf.updated.isoformat()
+                   })
 
 @app.route('/api/slurm/sshare')
 def send_sshare():

@@ -6,19 +6,21 @@
            href='https://slurm.schedmd.com/fair_tree.html#fairshare'>Fair Tree documentation</a>
     </div>
     <h1>Share</h1>
-    <slim-grid ref='slimgrid'
-               :data="allRows"
-               :downloadable="false"
-               :forceSyncScrolling="true"
-               :column-options="columns"
-               :sort="sorter"
-               :row-formatter="rowFormatter"
-               @before-init='beforeInit'
-               @after-init='afterInit'
-               @grid-dbl-click='dblClick'
-               @grid-click='click'
-               @filters-generated='filtersGenerated'
-               ></slim-grid>
+    <div class='slim-container'>
+        <slim-grid ref='slimgrid'
+                :data="allRows"
+                :downloadable="false"
+                :forceSyncScrolling="true"
+                :column-options="columns"
+                :sort="sorter"
+                :row-formatter="rowFormatter"
+                @before-init='beforeInit'
+                @after-init='afterInit'
+                @grid-dbl-click='dblClick'
+                @grid-click='click'
+                @filters-generated='filtersGenerated'
+                ></slim-grid>
+    </div>
     <div v-show='false'>
         Idea for FairShare.  Start at root of tree.
         All first level sorted by USAGE/SHARE.
@@ -132,8 +134,8 @@ export default class Share extends Vue {
                 // This row matches.  Add it, and all its parents
                 res[row.id]=1
                 while (row._parent !== null) {
-                    row = this.originalRows[row._parent]
-                    res[row.id]=1
+                    res[row._parent.id]=1
+                    row = row._parent
                 }
             }
         })
@@ -148,12 +150,12 @@ export default class Share extends Vue {
             let p1 = row1
             let p2 = row2
             while (row1._indent>row2._indent)
-                row1 = this.originalRows[row1._parent]
+                row1 = row1._parent
             while (row1._indent<row2._indent)
-                row2 = this.originalRows[row2._parent]
+                row2 = row2._parent
             while (row1._parent != row2._parent) {
-                row1 = this.originalRows[row1._parent]
-                row2 = this.originalRows[row2._parent]
+                row1 = row1._parent
+                row2 = row2._parent
             }
             // row1 and row2 now at the same level, and same parent, compare them.
             let result=0
@@ -206,7 +208,7 @@ export default class Share extends Vue {
 
         // Now check if the row is hidden by "collapsing"
         while (item._parent!==null) {
-            item = this.originalRows[item._parent]
+            item = item._parent
             if (item._collapsed)
                 return false
         }
@@ -289,5 +291,7 @@ div >>> .toggle.collapse {
 div >>> .highlight {
   background: #bbb;
 }
-
+div >>> .slim-container {
+    width: 1460px;
+}
 </style>
