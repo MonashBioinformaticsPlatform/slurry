@@ -48,7 +48,7 @@ class QOS:
             reader = open('test-data/qos.dmp', mode='rb')
         else:
             p = subprocess.Popen("sacctmgr -p show qos", shell=True, stdout=subprocess.PIPE, close_fds=True)
-            reader = p.stdout
+            reader = codecs.iterdecode(p.stdout, 'latin-1')
 
         self.data = list(csv.DictReader(reader, delimiter='|'))
         # Delete any empty key in the dicts
