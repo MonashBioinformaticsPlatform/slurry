@@ -10,8 +10,14 @@
 
         <span>
             State: {{state}}.
-            Partition: <select v-model='partition'>
-                <option v-for="p in partitions" :key="p.name" :value='p.name'>{{p.label}}</option>
+            Reason:
+                <select v-model='reason'>
+                    <option value='priority'>Priority</option>
+                    <option value='any'>Any</option>
+                </select>
+            Partition:
+                <select v-model='partition'>
+                    <option v-for="p in partitions" :key="p.name" :value='p.name'>{{p.label}}</option>
                 </select>
             Num entries : {{queue.length}}
         </span>
@@ -54,6 +60,7 @@ export default class PendingPlot extends Vue {
     textTip = []
     state = "PENDING"
     partition = "comp"
+    reason = 'priority'
     rendering=0
 
     @Watch('sizeSlider')
@@ -169,6 +176,7 @@ export default class PendingPlot extends Vue {
         this.textTip.unshift(["Rank", y + 1])
         this.textTip.push(["CPUs", row.CPUS])
         this.textTip.push(["Time Limit", row.TIME_LIMIT])
+        this.textTip.push(["Reason", row.Reason])
     }
 
     hideTip() {
@@ -197,11 +205,15 @@ export default class PendingPlot extends Vue {
         return Object.fromEntries(this.config.map(x => [x.key,x.value]))
     }
 
+    reasonMatch(job) {
+        return (this.reason=='any' || this.reason==job.Reason.toLowerCase())
+    }
+
     get queue () {
         let begin = Date.now()
         let res = this.$global.queue.data.filter(x => x.STATE==this.state &&
                                                       x.PARTITION_LIST.includes(this.partition) &&
-                                                      x.Reason=='Priority' &&
+                                                      this.reasonMatch(x) &&
                                                       x.PRIORITY>0)
         res.sort((a,b) => b.PRIORITY - a.PRIORITY)
         //console.log("Queue filtering took",Date.now()-begin)
@@ -220,7 +232,7 @@ export default class PendingPlot extends Vue {
         let counts = {}
         res.forEach(p => { counts[p.name] = 0 })
         this.$global.queue.data.map(x => {
-            if (x.STATE==this.state && x.Reason=='Priority' && x.PRIORITY>0) {
+            if (x.STATE==this.state && this.reasonMatch(x) && x.PRIORITY>0) {
                 x.PARTITION_LIST.map(p => counts[p] += 1)
             }
         })
