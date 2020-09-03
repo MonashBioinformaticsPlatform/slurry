@@ -1,6 +1,6 @@
 <template>
     <div class="home">
-        <datetime :datetime="dt"/>
+        <datetime :datetime="dt" :refresh="false"/>
         <h1>Config</h1>
         <div class='slim-container'>
             <slim-grid :data="config"

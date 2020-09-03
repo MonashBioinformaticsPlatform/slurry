@@ -36,22 +36,19 @@ import PrioLegend from '@/components/PrioLegend.vue'; // @ is an alias to /src
     },
 })
 export default class App extends Vue {
-    loaded = false
     configLoaded = null
     sshareLoaded = null
     queueLoaded = null
     priority_flags = ""
     myUser = ""
 
-    checkLoaded() {
-        if (this.configLoaded && this.sshareLoaded && this.queueLoaded) {
-            this.$global.config = this.processConfig(this.configLoaded)
-            this.$global.sshare = this.processShare(this.sshareLoaded)
-            this.$global.queue = this.processQueue(this.queueLoaded)
-            this.loaded = true
-        }
+    get loaded() {
+        return Object.keys(this.$global.config).length>0 &&
+               Object.keys(this.$global.sshare).length>0 &&
+               Object.keys(this.$global.queue).length>0
     }
 
+    @Watch('configLoaded')
     processConfig(config) {
         // console.log("qos ", config.qos)
         // console.log("partitions", config.partitions)
@@ -77,13 +74,15 @@ export default class App extends Vue {
             return o;
         })
 
-        return {config: res_config,
+        this.$global.config =
+               {config: res_config,
                 partitions: res_partitions,
                 qos: res_qos,
                 updated: config.updated
                 };
     }
 
+    @Watch('sshareLoaded')
     processShare(share) {
         let parents = []
         let last_o = null
@@ -117,9 +116,10 @@ export default class App extends Vue {
             last_o = o
             return o
         })
-        return {data: res, updated: share.updated}
+        this.$global.sshare = {data: res, updated: share.updated}
     }
 
+    @Watch('queueLoaded')
     processQueue(queue) {
         let res = queue.data.map((r, idx) => {
             let o = {}
@@ -149,7 +149,7 @@ export default class App extends Vue {
             o['NodeList(Reason)'] = r.NodeList=='(null)' ? `(${r.Reason})` : r.NodeList
             return o
         })
-        return {data: res, updated: queue.updated}
+        this.$global.queue = {data: res, updated: queue.updated}
     }
 
     @Watch('myUser')
@@ -158,17 +158,31 @@ export default class App extends Vue {
         localStorage.setItem('myUser', this.myUser)
     }
 
+    // We don't refresh config, it won't change anyway.  TODO - it probably will occasionally
+    refresh() {
+        let sshare = axios.get("/api/slurm/sshare")
+        let queue = axios.get("/api/slurm/queue")
+        Promise.all([sshare,queue]).then((values) => {
+            this.sshareLoaded = values[0].data
+            this.queueLoaded  = values[1].data
+        })
+
+    }
+
     mounted () {
         if (localStorage.myUser) {
             this.myUser = localStorage.getItem('myUser')
         }
+        this.$eventBus.$on('refresh', this.refresh)
 
-        axios.get("/api/slurm/config")
-                .then(response => { this.configLoaded = response.data; this.checkLoaded() })
-        axios.get("/api/slurm/sshare")
-                .then(response => { this.sshareLoaded = response.data; this.checkLoaded() })
-        axios.get("/api/slurm/queue")
-                .then(response => { this.queueLoaded = response.data; this.checkLoaded() })
+        let config = axios.get("/api/slurm/config")
+        let sshare = axios.get("/api/slurm/sshare")
+        let queue = axios.get("/api/slurm/queue")
+        Promise.all([config,sshare,queue]).then((values) => {
+            this.configLoaded = values[0].data
+            this.sshareLoaded = values[1].data
+            this.queueLoaded  = values[2].data
+        })
     }
 
 }
